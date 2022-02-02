@@ -1,0 +1,785 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd ">
+    <http:listener-config name="exp-menugrp-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8081" />
+    </http:listener-config>
+    <apikit:config name="exp-menugrp-config" api="resource::16f430fe-af84-4090-bad5-7f8fd21e6ed2:exp-menugrp:1.0.1:raml:zip:exp-menugrp.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="exp-menugrp-main">
+        <http:listener config-ref="exp-menugrp-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="exp-menugrp-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="exp-menugrp-console">
+        <http:listener config-ref="exp-menugrp-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="exp-menugrp-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="get:\menuList:exp-menugrp-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  data: [
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: true,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 5330,
+      ItemCode: "MAMMCS",
+      FGCode: "7622",
+      Title: "McAloo Tikki (M) Meal with Chocolate Shake",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 254,
+      DiscountedPrice: 204,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1597729341/Items/5330.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "Enjoy a combo of McAloo Tikki + Fries (M) + McCafé Chocolate Shake",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/mealcontent",
+      IsVeg: true,
+      TypeID: "",
+      Tag: null,
+      IsCustomizable: true,
+      IsTop10Product: false,
+      Calorie: 0,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: true,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 5339,
+      ItemCode: "MVMMCS",
+      FGCode: "7621",
+      Title: "McVeggie (M) Meal with Chocolate Shake",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 314,
+      DiscountedPrice: 264,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1597729343/Items/5339.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "Enjoy a combo of McVeggie + Fries (M) + McCafé Chocolate Shake",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/mealcontent",
+      IsVeg: true,
+      TypeID: "",
+      Tag: null,
+      IsCustomizable: true,
+      IsTop10Product: false,
+      Calorie: 0,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: true,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 5332,
+      ItemCode: "MCMMCS",
+      FGCode: "7620",
+      Title: "McChicken (M) Meal with Chocolate Shake",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 329,
+      DiscountedPrice: 279,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1597729342/Items/5332.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "Your favorite McChicken Burger + Fries (M) + McCafé Chocolate Shake",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/mealcontent",
+      IsVeg: false,
+      TypeID: "",
+      Tag: null,
+      IsCustomizable: true,
+      IsTop10Product: false,
+      Calorie: 0,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: true,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 5329,
+      ItemCode: "SPMMCS",
+      FGCode: "7624",
+      Title: "McSpicy Paneer (M) Meal with Chocolate Shake",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 372,
+      DiscountedPrice: 322,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1597729342/Items/5329.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "Scrumptiously filling McSpicy Paneer Burger + Fries (M) + McCafé Chocolate Shake",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/mealcontent",
+      IsVeg: true,
+      TypeID: "",
+      Tag: null,
+      IsCustomizable: true,
+      IsTop10Product: false,
+      Calorie: 0,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: true,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 5337,
+      ItemCode: "SCMMCS",
+      FGCode: "7623",
+      Title: "McSpicy Chicken (M) Meal with Chocolate Shake",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 377,
+      DiscountedPrice: 327,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1597729344/Items/5337.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "Scrumptiously filling McSpicy Chicken Burger + Fries (M) + McCafé Chocolate Shake",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/mealcontent",
+      IsVeg: false,
+      TypeID: "",
+      Tag: null,
+      IsCustomizable: true,
+      IsTop10Product: false,
+      Calorie: 0,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: false,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 4694,
+      ItemCode: "PZPMVG",
+      FGCode: "8961",
+      Title: "Pizza Mc Puff + McVeggie",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 117,
+      DiscountedPrice: 117,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1554983593/Items/4694.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "Pizza Mc Puff + McVeggie",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/alacarteingredient",
+      IsVeg: true,
+      TypeID: "",
+      Tag: "New",
+      IsCustomizable: false,
+      IsTop10Product: false,
+      Calorie: 0,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: false,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 5017,
+      ItemCode: "ZMMVMA",
+      FGCode: "7745",
+      Title: "McVeggie + McAloo Tikki Burger",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 133,
+      DiscountedPrice: 133,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1595414016/Item/5017.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "McVeggie + McAloo Tikki Burger",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/alacarteingredient",
+      IsVeg: true,
+      TypeID: "",
+      Tag: null,
+      IsCustomizable: false,
+      IsTop10Product: false,
+      Calorie: 0,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: false,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 4693,
+      ItemCode: "PZPMSC",
+      FGCode: "8960",
+      Title: "Pizza Mc Puff + McSpicy Chicken",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 170,
+      DiscountedPrice: 170,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1554983593/Items/4693.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "Pizza Mc Puff + McSpicy Chicken",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/alacarteingredient",
+      IsVeg: false,
+      TypeID: "",
+      Tag: "New",
+      IsCustomizable: false,
+      IsTop10Product: false,
+      Calorie: 0,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: false,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 4736,
+      ItemCode: "2ICECF",
+      FGCode: "9038",
+      Title: "2 Iced Coffee",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 198,
+      DiscountedPrice: 198,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1593066962/Item/4736.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "2 Iced Coffee @ 198\r\n",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/alacarteingredient",
+      IsVeg: true,
+      TypeID: "",
+      Tag: null,
+      IsCustomizable: false,
+      IsTop10Product: false,
+      Calorie: 0,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: false,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 4837,
+      ItemCode: "SCAICC",
+      FGCode: "7577",
+      Title: "Cappuccino (S) + Iced Coffee (S)",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 198,
+      DiscountedPrice: 198,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1593066971/Item/4837.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "Cappuccino (S) + Iced Coffee (S)",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/alacarteingredient",
+      IsVeg: true,
+      TypeID: "",
+      Tag: null,
+      IsCustomizable: false,
+      IsTop10Product: false,
+      Calorie: 0,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: false,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 5016,
+      ItemCode: "ZMMCSC",
+      FGCode: "7742",
+      Title: "McChicken + McSpicy Chicken Burger",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 296,
+      DiscountedPrice: 281,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1595414136/Item/5016.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "McChicken + McSpicy Chicken Burger",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/alacarteingredient",
+      IsVeg: false,
+      TypeID: "",
+      Tag: null,
+      IsCustomizable: false,
+      IsTop10Product: false,
+      Calorie: 0,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: false,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 495,
+      ItemCode: "DPSPCH",
+      FGCode: "5071",
+      Title: "McSpicy Chicken Double Patty Burger",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 299,
+      DiscountedPrice: 299,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1593064907/Item/495.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "Two tender & juicy chicken patties coated in spicy, crispy batter topped with a creamy sauce & crispy shredded lettuce will have you craving for more.\t",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/alacarteingredient",
+      IsVeg: false,
+      TypeID: "",
+      Tag: null,
+      IsCustomizable: true,
+      IsTop10Product: false,
+      Calorie: 666,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: true,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 5161,
+      ItemCode: "MDALLF",
+      FGCode: "7301",
+      Title: "2 McAloo Tikki + 2 Fries (L)",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 330,
+      DiscountedPrice: 309,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1589467002/Item/5161.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "Stay home, stay safe and share a combo- 2 McAloo Tikki Burgers + 2 Fries (L)\t",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/mealcontent",
+      IsVeg: true,
+      TypeID: "",
+      Tag: null,
+      IsCustomizable: true,
+      IsTop10Product: false,
+      Calorie: 1626,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: true,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 5150,
+      ItemCode: "MDMCMV",
+      FGCode: "7302",
+      Title: "McChicken + McVeggie + Fries (L) + 2 Veg Pizza McPuff + Coke (M)",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 526,
+      DiscountedPrice: 499,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1589466996/Item/5150.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "Stay home, stay safe and share a meal!- McChicken Burger + McVeggie Burger + Fries (L) + 2 Veg Pizza McPuff + Coke (M)\t",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/mealcontent",
+      IsVeg: false,
+      TypeID: "",
+      Tag: null,
+      IsCustomizable: true,
+      IsTop10Product: false,
+      Calorie: 2317,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: true,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 5151,
+      ItemCode: "MDMVAV",
+      FGCode: "7309",
+      Title: "2 McVeggie + 2 American Cheese Supreme Veg + 2 Fries (L)",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 698,
+      DiscountedPrice: 659,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1593066995/Item/5151.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "The combo of favourites! Get 2 McVeggie + 2 American Cheese Supreme Veg + 2 Fries (L)\t",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/mealcontent",
+      IsVeg: true,
+      TypeID: "",
+      Tag: null,
+      IsCustomizable: true,
+      IsTop10Product: false,
+      Calorie: 2658,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: true,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 5197,
+      ItemCode: "MVSCCB",
+      FGCode: "7361",
+      Title: "2 McVeggie + 2 McAloo Tikki + 2 Fries (M) + 2 Strawberry Shakes",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 850,
+      DiscountedPrice: 770,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1593067058/Item/5197.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "2 McVeggie + 2 McAloo Tikki + 2 Fries (M) + 2 Strawberry Shakes",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/mealcontent",
+      IsVeg: true,
+      TypeID: "",
+      Tag: null,
+      IsCustomizable: true,
+      IsTop10Product: false,
+      Calorie: 3890,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: true,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 5163,
+      ItemCode: "MDSC20",
+      FGCode: "7308",
+      Title: "2 McSpicy Chicken + McNuggets 20 Pcs + Fries (L) + Coke (M)",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 882,
+      DiscountedPrice: 859,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1589467003/Item/5163.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "Stay home, stay safe and share a meal- 2 McSpicy Chicken burgers + Chicken McNuggets 20 Pcs + Fries (L) + Coke (M)\t",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/mealcontent",
+      IsVeg: false,
+      TypeID: "",
+      Tag: null,
+      IsCustomizable: true,
+      IsTop10Product: false,
+      Calorie: 2413,
+      SearchTag: "",
+      IsHold: false,
+      UrlHandle: null
+    }, 
+    {
+      ProductUrl: null,
+      ItemType: null,
+      IsMeal: true,
+      MealItems: null,
+      Ingredients: null,
+      CustomizationText: null,
+      CustomizationPrice: 0,
+      DiscountedCustomizationPrice: 0,
+      CategoryRefId: 4604,
+      CategoryName: "Deals",
+      ItemId: 5167,
+      ItemCode: "2PSZNV",
+      FGCode: "7313",
+      Title: "Schezwan Non Veg Double Patty Sharing Meal ",
+      CategoryID: 4604,
+      ItemTypeID: 0,
+      Price: 408,
+      DiscountedPrice: 439,
+      ImageUrl: "https://images.mcdelivery.co.in/hardcastle-restaurants-pvt-ltd/image/upload/f_auto,q_auto,IMGSIZE/v1593067003/Item/5167.png",
+      CurrencyType: "INR",
+      CurrencySymbol: "₹",
+      Description: "Spice it up with the new spicy combos- 2 Schezwan Grilled Chicken Burgers + Fries (S) + Masala Wedges (S) + Chicken McNuggets 4 PC\t",
+      DetailPageURL: "https://services.mcdelivery.co.in/Api/product/mealcontent",
+      IsVeg: false,
+      TypeID: "",
+      Tag: null,
+      IsCustomizable: true,
+      IsTop10Product: false,
+      Calorie: 1208,
+      SearchTag: "",
+      IsHold: true,
+      UrlHandle: null
+    }
+  ],
+  s: 1,
+  m: "Success"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="get:\menugroup:exp-menugrp-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  ProductUrl: null,
+  ItemType: null,
+  IsMeal: true,
+  MealItems: null,
+  Ingredients: null,
+  CustomizationText: null,
+  CustomizationPrice: 0,
+  DiscountedCustomizationPrice: 0,
+  CategoryRefId: 4604
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+    <flow name="post:\menuList:application\json:exp-menugrp-config">
+        <ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  Message: "Successfully created"
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+</mule>
